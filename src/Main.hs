@@ -2,8 +2,12 @@ module Main(main) where
 
 import Options.Applicative
 
+type ItemIndex = Int
+
 defaultDataPath :: FilePath
 defaultDataPath = "~/.to-do.yaml"
+
+data Options = Options FilePath ItemIndex deriving Show
 
 dataPathParser :: Parser FilePath
 dataPathParser = strOption $
@@ -13,17 +17,15 @@ dataPathParser = strOption $
   <> metavar "DATAPATH"
   <> help ("path to data file (default " ++ defaultDataPath ++ ")")
 
-
---  argument auto ()
-
-type ItemIndex = Int
-
 itemIndexParser :: Parser ItemIndex
 itemIndexParser = argument auto (metavar "ITEMINDEX" <> help "index of item")
 
+optionsParser :: Parser Options
+optionsParser = Options
+  <$> dataPathParser
+  <*> itemIndexParser
+
 main :: IO ()
 main = do
-  dataPath <- execParser (info (dataPathParser) (progDesc "To-do list manager"))
-  putStrLn $ "dataPath=" ++ show dataPath
-  -- itemIndex <- execParser (info (itemIndexParser) (progDesc "To-do list manager"))
-  -- putStrLn $ "itemIndex=" ++ show itemIndex
+  options <- execParser (info (optionsParser) (progDesc "To-do list manager"))
+  putStrLn $ "options=" ++ show options
