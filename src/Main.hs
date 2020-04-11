@@ -9,7 +9,7 @@ type ItemDescription = Maybe String
 defaultDataPath :: FilePath
 defaultDataPath = "~/.to-do.yaml"
 
-data Options = Options FilePath ItemIndex ItemDescription deriving Show
+data Options = Options FilePath Command deriving Show
 
 data Command =
   Info
@@ -18,7 +18,8 @@ data Command =
   | Add
   | View
   | Update
-  | Remove deriving Show
+  | Remove
+  deriving Show
 
 infoParser :: Parser Command
 infoParser = pure Info
@@ -74,8 +75,7 @@ updateItemDescriptionParser =
 optionsParser :: Parser Options
 optionsParser = Options
   <$> dataPathParser
-  <*> itemIndexParser
-  <*> updateItemDescriptionParser
+  <*> commandParser
 
 main :: IO ()
 main = do
