@@ -79,5 +79,15 @@ optionsParser = Options
 
 main :: IO ()
 main = do
-  options <- execParser (info (optionsParser) (progDesc "To-do list manager"))
-  putStrLn $ "options=" ++ show options
+  Options dataPath command <- execParser (info (optionsParser) (progDesc "To-do list manager"))
+  run dataPath command
+
+run :: FilePath -> Command -> IO ()
+run dataPath Info = putStrLn "info"
+run dataPath Init = putStrLn "init"
+run dataPath List = putStrLn "list"
+run dataPath Add = putStrLn "add"
+run dataPath View = putStrLn "view"
+run dataPath Update = putStrLn "update"
+run dataPath Remove = putStrLn "remove"
+
