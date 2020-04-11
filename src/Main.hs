@@ -29,9 +29,9 @@ data Command =
     | Init
     | List
     | Add Item
-    | View
+    | View ItemIndex
     | Update ItemIndex ItemUpdate
-    | Remove
+    | Remove ItemIndex
     deriving Show
 
 defaultDataPath :: FilePath
@@ -57,7 +57,7 @@ addItemParser = Item
     <*> optional itemDueByValueParser
 
 viewParser :: Parser Command
-viewParser = pure View
+viewParser = View <$> itemIndexParser
 
 updateParser :: Parser Command
 updateParser = Update <$> itemIndexParser <*> updateItemParser
@@ -89,7 +89,7 @@ updateItemDueByParser =
 
 
 removeParser :: Parser Command
-removeParser = pure Remove
+removeParser = Remove <$> itemIndexParser
 
 commandParser :: Parser Command
 commandParser = subparser $ mconcat
@@ -140,7 +140,7 @@ run dataPath Info = putStrLn "info"
 run dataPath Init = putStrLn "init"
 run dataPath List = putStrLn "list"
 run dataPath (Add item) = putStrLn $ "add: " ++ show item
-run dataPath View = putStrLn "view"
+run dataPath (View itemIndex) = putStrLn $ "view #" ++ show itemIndex
 run dataPath (Update itemIndex itemUpdate) = putStrLn $ "update item #" ++ show itemIndex ++ " with update " ++ show itemUpdate
-run dataPath Remove = putStrLn "remove"
+run dataPath (Remove itemIndex) = putStrLn $ "remove #" ++ show itemIndex
 
