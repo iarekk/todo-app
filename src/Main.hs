@@ -8,11 +8,18 @@ type ItemDescription = Maybe String
 type ItemPriority = Maybe String
 type ItemDueBy = Maybe String
 
+data Item = Item
+    { title         :: ItemTitle
+    , description   :: ItemDescription
+    , priority      :: ItemPriority
+    , dueBy         :: ItemDueBy
+    } deriving Show
+
 data ItemUpdate = ItemUpdate
-    { titleUpdate :: Maybe ItemTitle
+    { titleUpdate       :: Maybe ItemTitle
     , descriptionUpdate :: Maybe ItemDescription
-    , priorityUpdate :: Maybe ItemPriority
-    , dueByUpdate :: Maybe ItemDueBy
+    , priorityUpdate    :: Maybe ItemPriority
+    , dueByUpdate       :: Maybe ItemDueBy
     } deriving Show
 
 data Options = Options FilePath Command deriving Show
@@ -21,7 +28,7 @@ data Command =
     Info
     | Init
     | List
-    | Add
+    | Add Item
     | View
     | Update ItemIndex ItemUpdate
     | Remove
@@ -40,7 +47,14 @@ listParser :: Parser Command
 listParser = pure List
 
 addParser :: Parser Command
-addParser = pure Add
+addParser = Add <$> addItemParser
+
+addItemParser :: Parser Item
+addItemParser = Item
+    <$> argument str (metavar "TITLE" <> help "title")
+    <*> optional itemDescriptionValueParser
+    <*> optional itemPriorityValueParser
+    <*> optional itemDueByValueParser
 
 viewParser :: Parser Command
 viewParser = pure View
@@ -50,10 +64,10 @@ updateParser = Update <$> itemIndexParser <*> updateItemParser
 
 updateItemParser :: Parser ItemUpdate
 updateItemParser = ItemUpdate
-    <$> optional updateItemTitleParser -- titleUpdate :: Maybe ItemTitle
-    <*> optional updateItemDescriptionParser -- descriptionUpdate :: Maybe ItemDescription
-    <*> optional updateItemPriorityParser -- priorityUpdate :: Maybe ItemPriority
-    <*> optional updateItemDueByParser -- dueByUpdate :: Maybe ItemDueBy
+    <$> optional updateItemTitleParser
+    <*> optional updateItemDescriptionParser
+    <*> optional updateItemPriorityParser
+    <*> optional updateItemDueByParser
 
 updateItemTitleParser :: Parser ItemTitle
 updateItemTitleParser = itemTitleValueParser
@@ -125,7 +139,7 @@ run :: FilePath -> Command -> IO ()
 run dataPath Info = putStrLn "info"
 run dataPath Init = putStrLn "init"
 run dataPath List = putStrLn "list"
-run dataPath Add = putStrLn "add"
+run dataPath (Add item) = putStrLn $ "add: " ++ show item
 run dataPath View = putStrLn "view"
 run dataPath (Update itemIndex itemUpdate) = putStrLn $ "update item #" ++ show itemIndex ++ " with update " ++ show itemUpdate
 run dataPath Remove = putStrLn "remove"
