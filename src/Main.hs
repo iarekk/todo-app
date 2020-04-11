@@ -1,6 +1,6 @@
 module Main(main) where
 
-import Options.Applicative
+import Options.Applicative hiding (infoParser)
 
 type ItemIndex = Int
 
@@ -10,6 +10,47 @@ defaultDataPath :: FilePath
 defaultDataPath = "~/.to-do.yaml"
 
 data Options = Options FilePath ItemIndex ItemDescription deriving Show
+
+data Command =
+  Info
+  | Init
+  | List
+  | Add
+  | View
+  | Update
+  | Remove deriving Show
+
+infoParser :: Parser Command
+infoParser = pure Info
+
+initParser :: Parser Command
+initParser = pure Init
+
+listParser :: Parser Command
+listParser = pure List
+
+addParser :: Parser Command
+addParser = pure Add
+
+viewParser :: Parser Command
+viewParser = pure View
+
+updateParser :: Parser Command
+updateParser = pure Update
+
+removeParser :: Parser Command
+removeParser = pure Remove
+
+commandParser :: Parser Command
+commandParser = subparser $ mconcat 
+   [ command "info" (info infoParser (progDesc "Show info"))
+   , command "init" (info initParser (progDesc "Initialise items"))
+   , command "list" (info listParser (progDesc "List items"))
+   , command "add" (info addParser (progDesc "Add item"))
+   , command "view" (info viewParser (progDesc "View item"))
+   , command "update" (info updateParser (progDesc "Update item"))
+   , command "remove" (info removeParser (progDesc "Remove item"))
+   ]
 
 dataPathParser :: Parser FilePath
 dataPathParser = strOption $
