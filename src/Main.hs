@@ -145,7 +145,7 @@ optionsParser = RunOptions
     <*> commandParser
 
 main :: IO ()
-main = BS.putStrLn $ Yaml.encode $ ToDoList
+main = writeToDoList "file.txt" $ ToDoList
     [ Item "title1" (Just "description1") (Just "priority1") (Just "dueBy1")
     , Item "title2" (Just "description2") (Just "priority2") (Just "dueBy2")
     ]
@@ -160,3 +160,5 @@ run dataPath (View itemIndex) = putStrLn $ "view #" ++ show itemIndex
 run dataPath (Update itemIndex itemUpdate) = putStrLn $ "update item #" ++ show itemIndex ++ " with update " ++ show itemUpdate
 run dataPath (Remove itemIndex) = putStrLn $ "remove #" ++ show itemIndex
 
+writeToDoList :: FilePath -> ToDoList -> IO()
+writeToDoList path todos = BS.writeFile path (Yaml.encode todos)
