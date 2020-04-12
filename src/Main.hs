@@ -3,6 +3,7 @@
 
 module Main(main) where
 
+import           Control.Exception
 import           Data.Aeson
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
@@ -10,6 +11,7 @@ import           Data.Either.Combinators (rightToMaybe)
 import qualified Data.Yaml as Yaml
 import           GHC.Generics
 import           Options.Applicative hiding (infoParser)
+import           System.IO.Error
 
 type ItemIndex = Int
 type ItemTitle = String
@@ -151,7 +153,10 @@ main = do
     print toDoList
 
 readToDoList :: FilePath -> IO (Maybe ToDoList)
-readToDoList path = BS.readFile path >>= return . rightToMaybe . Yaml.decodeEither'
+readToDoList path = catchJust
+    (\e -> if isDoesNotExistError e then Just () else Nothing)
+    (BS.readFile path >>= return . superDecode)
+    (\_ -> return $ Just (ToDoList []))
 
 superDecode :: BS.ByteString -> Maybe ToDoList
 superDecode s = (rightToMaybe . Yaml.decodeEither') s
