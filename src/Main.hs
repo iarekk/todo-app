@@ -6,6 +6,7 @@ module Main(main) where
 import           Data.Aeson
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
+import           Data.Either.Combinators (rightToMaybe)
 import qualified Data.Yaml as Yaml
 import           GHC.Generics
 import           Options.Applicative hiding (infoParser)
@@ -145,11 +146,15 @@ optionsParser = RunOptions
     <*> commandParser
 
 main :: IO ()
-main = writeToDoList "file.txt" $ ToDoList
-    [ Item "title1" (Just "description1") (Just "priority1") (Just "dueBy1")
-    , Item "title2" (Just "description2") (Just "priority2") (Just "dueBy2")
-    ]
+main = do
+    toDoList <- readToDoList "file.txt"
+    print toDoList
 
+readToDoList :: FilePath -> IO (Maybe ToDoList)
+readToDoList path = BS.readFile path >>= return . rightToMaybe . Yaml.decodeEither'
+
+superDecode :: BS.ByteString -> Maybe ToDoList
+superDecode s = (rightToMaybe . Yaml.decodeEither') s
 
 run :: FilePath -> Command -> IO ()
 run dataPath Info = putStrLn "info"
