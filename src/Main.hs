@@ -145,9 +145,8 @@ optionsParser = RunOptions
     <*> commandParser
 
 main :: IO ()
-main = do
-    RunOptions dataPath command <- execParser (info (optionsParser) (progDesc "To-do list manager"))
-    run dataPath command
+main =
+    BSL.putStrLn $ encode (ToDoList "the-name" "the-desc")
 
 run :: FilePath -> Command -> IO ()
 run dataPath Info = putStrLn "info"
