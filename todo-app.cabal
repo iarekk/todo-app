@@ -21,6 +21,7 @@ executable todo-app
   build-depends:       aeson
                      , base >= 4.7 && < 5
                      , bytestring
+                     , either
                      , optparse-applicative
                      , strict
                      , text
