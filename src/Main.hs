@@ -21,7 +21,9 @@ data Item = Item
     , description   :: ItemDescription
     , priority      :: ItemPriority
     , dueBy         :: ItemDueBy
-    } deriving Show
+    } deriving (Generic, Show)
+instance ToJSON Item
+instance FromJSON Item
 
 data ItemUpdate = ItemUpdate
     { titleUpdate       :: Maybe ItemTitle
@@ -42,11 +44,9 @@ data Command =
     | Remove ItemIndex
     deriving Show
 
-data ToDoList = ToDoList
-    { name :: String
-    , details :: String
-    } deriving (Generic, Show)
+data ToDoList = ToDoList [Item] deriving (Generic, Show)
 instance ToJSON ToDoList
+instance FromJSON ToDoList
 
 defaultDataPath :: FilePath
 defaultDataPath = "~/.to-do.yaml"
@@ -145,8 +145,11 @@ optionsParser = RunOptions
     <*> commandParser
 
 main :: IO ()
-main =
-    BSL.putStrLn $ encode (ToDoList "the-name" "the-desc")
+main = BSL.putStrLn $ encode $ ToDoList
+    [ Item "title1" (Just "description1") (Just "priority1") (Just "dueBy1")
+    , Item "title2" (Just "description2") (Just "priority2") (Just "dueBy2")
+    ]
+
 
 run :: FilePath -> Command -> IO ()
 run dataPath Info = putStrLn "info"
