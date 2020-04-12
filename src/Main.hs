@@ -1,6 +1,14 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main(main) where
 
-import Options.Applicative hiding (infoParser)
+import           Data.Aeson
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as BSL
+import qualified Data.Yaml as Yaml
+import           GHC.Generics
+import           Options.Applicative hiding (infoParser)
 
 type ItemIndex = Int
 type ItemTitle = String
@@ -22,7 +30,7 @@ data ItemUpdate = ItemUpdate
     , dueByUpdate       :: Maybe ItemDueBy
     } deriving Show
 
-data Options = Options FilePath Command deriving Show
+data RunOptions = RunOptions FilePath Command deriving Show
 
 data Command =
     Info
@@ -33,6 +41,12 @@ data Command =
     | Update ItemIndex ItemUpdate
     | Remove ItemIndex
     deriving Show
+
+data ToDoList = ToDoList
+    { name :: String
+    , details :: String
+    } deriving (Generic, Show)
+instance ToJSON ToDoList
 
 defaultDataPath :: FilePath
 defaultDataPath = "~/.to-do.yaml"
@@ -125,14 +139,14 @@ itemPriorityValueParser = strOption (long "priority" <> short 'p' <> metavar "PR
 itemDueByValueParser :: Parser String
 itemDueByValueParser = strOption (long "due-by" <> short 'b' <> metavar "DUEBY" <> help "due by")
 
-optionsParser :: Parser Options
-optionsParser = Options
+optionsParser :: Parser RunOptions
+optionsParser = RunOptions
     <$> dataPathParser
     <*> commandParser
 
 main :: IO ()
 main = do
-    Options dataPath command <- execParser (info (optionsParser) (progDesc "To-do list manager"))
+    RunOptions dataPath command <- execParser (info (optionsParser) (progDesc "To-do list manager"))
     run dataPath command
 
 run :: FilePath -> Command -> IO ()
