@@ -152,11 +152,15 @@ main = do
     toDoList <- readToDoList "file.txt"
     print toDoList
 
-readToDoList :: FilePath -> IO (Maybe ToDoList)
-readToDoList path = catchJust
-    (\e -> if isDoesNotExistError e then Just () else Nothing)
-    (BS.readFile path >>= return . superDecode)
-    (\_ -> return $ Just (ToDoList []))
+readToDoList :: FilePath -> IO ToDoList
+readToDoList path = do
+    mbToDoList <- catchJust
+        (\e -> if isDoesNotExistError e then Just () else Nothing)
+        (BS.readFile path >>= return . superDecode)
+        (\_ -> return $ Just (ToDoList []))
+    case mbToDoList of
+        Nothing -> error "YAML file is corrupt"
+        Just toDoList -> return toDoList
 
 superDecode :: BS.ByteString -> Maybe ToDoList
 superDecode s = (rightToMaybe . Yaml.decodeEither') s
