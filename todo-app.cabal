@@ -27,5 +27,6 @@ executable todo-app
                      , optparse-applicative
                      , strict
                      , text
+                     , time
                      , yaml
 
