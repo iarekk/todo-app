@@ -9,6 +9,7 @@ import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Either.Combinators (rightToMaybe)
 import           Data.String.Utils(replace)
+import           Data.Time
 import qualified Data.Yaml as Yaml
 import           GHC.Generics
 import           Options.Applicative hiding (infoParser)
@@ -18,8 +19,12 @@ import           System.IO.Error
 type ItemIndex = Int
 type ItemTitle = String
 type ItemDescription = Maybe String
-type ItemPriority = Maybe String
-type ItemDueBy = Maybe String
+type ItemPriority = Maybe Priority
+type ItemDueBy = Maybe LocalTime
+
+data Priority = Low | Normal | High deriving (Generic, Show)
+instance ToJSON Priority
+instance FromJSON Priority
 
 data Item = Item
     { title         :: ItemTitle
@@ -138,11 +143,27 @@ itemTitleValueParser = strOption (long "title" <> short 't' <> metavar "TITLE" <
 itemDescriptionValueParser :: Parser String
 itemDescriptionValueParser = strOption (long "desc" <> short 'd' <> metavar "DESCRIPTION" <> help "description")
 
-itemPriorityValueParser :: Parser String
-itemPriorityValueParser = strOption (long "priority" <> short 'p' <> metavar "PRIORITY" <> help "priority")
+itemPriorityValueParser :: Parser Priority
+itemPriorityValueParser =
+    option readPriority (long "priority" <> short 'p' <> metavar "PRIORITY" <> help "priority")
+    where
+        readPriority = eitherReader $ \arg ->
+            case arg of
+                "1" -> Right High
+                "2" -> Right Normal
+                "3" -> Right Low
+                _   -> Left $ "Invalid priority value: " ++ arg
 
-itemDueByValueParser :: Parser String
-itemDueByValueParser = strOption (long "due-by" <> short 'b' <> metavar "DUEBY" <> help "due by")
+itemDueByValueParser :: Parser LocalTime
+itemDueByValueParser =
+    option readDateTime (long "due-by" <> short 'b' <> metavar "DUEBY" <> help "due by")
+    where
+        readDateTime = eitherReader $ \arg ->
+            case parseDateTimeMaybe arg of
+                (Just dateTime) -> Right dateTime
+                Nothing -> Left $ "Date/time must be in " ++ dateTimeFormat ++ " format"
+        parseDateTimeMaybe = parseTimeM False defaultTimeLocale dateTimeFormat
+        dateTimeFormat = "%Y/%m/%d %H:%M:%S"
 
 optionsParser :: Parser RunOptions
 optionsParser = RunOptions
@@ -157,9 +178,11 @@ main = do
 
     let expandedDataPath = replace "~" homeDir dataPath
 
+    let dueBy = LocalTime (ModifiedJulianDay 0) (TimeOfDay 13 0 0)
+
     writeToDoList expandedDataPath $ ToDoList
-        [ Item "title1" (Just "description1") (Just "priority1") (Just "dueBy1")
-        , Item "title2" (Just "description2") (Just "priority2") (Just "dueBy2")
+        [ Item "title1" (Just "description1") (Just High) (Just dueBy)
+        , Item "title2" (Just "description2") (Just Low) (Just dueBy)
         ]
 
     toDoList <- readToDoList expandedDataPath
