@@ -52,7 +52,7 @@ instance ToJSON ToDoList
 instance FromJSON ToDoList
 
 defaultDataPath :: FilePath
-defaultDataPath = "~/.to-do.yaml"
+defaultDataPath = "file.txt" -- "~/.to-do.yaml"
 
 infoParser :: Parser Command
 infoParser = pure Info
@@ -149,7 +149,14 @@ optionsParser = RunOptions
 
 main :: IO ()
 main = do
-    toDoList <- readToDoList "file.txt"
+    RunOptions dataPath command <- execParser (info (optionsParser) (progDesc "To-do list application"))
+
+    writeToDoList dataPath $ ToDoList
+        [ Item "title1" (Just "description1") (Just "priority1") (Just "dueBy1")
+        , Item "title2" (Just "description2") (Just "priority2") (Just "dueBy2")
+        ]
+
+    toDoList <- readToDoList dataPath
     print toDoList
 
 readToDoList :: FilePath -> IO ToDoList
