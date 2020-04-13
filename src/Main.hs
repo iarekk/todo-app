@@ -8,9 +8,11 @@ import           Data.Aeson
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Either.Combinators (rightToMaybe)
+import           Data.String.Utils(replace)
 import qualified Data.Yaml as Yaml
 import           GHC.Generics
 import           Options.Applicative hiding (infoParser)
+import           System.Directory(getHomeDirectory)
 import           System.IO.Error
 
 type ItemIndex = Int
@@ -52,7 +54,7 @@ instance ToJSON ToDoList
 instance FromJSON ToDoList
 
 defaultDataPath :: FilePath
-defaultDataPath = "file.txt" -- "~/.to-do.yaml"
+defaultDataPath = "~/.to-do.yaml"
 
 infoParser :: Parser Command
 infoParser = pure Info
@@ -151,12 +153,16 @@ main :: IO ()
 main = do
     RunOptions dataPath command <- execParser (info (optionsParser) (progDesc "To-do list application"))
 
-    writeToDoList dataPath $ ToDoList
+    homeDir <- getHomeDirectory
+
+    let expandedDataPath = replace "~" homeDir dataPath
+
+    writeToDoList expandedDataPath $ ToDoList
         [ Item "title1" (Just "description1") (Just "priority1") (Just "dueBy1")
         , Item "title2" (Just "description2") (Just "priority2") (Just "dueBy2")
         ]
 
-    toDoList <- readToDoList dataPath
+    toDoList <- readToDoList expandedDataPath
     print toDoList
 
 readToDoList :: FilePath -> IO ToDoList
