@@ -54,7 +54,7 @@ data Command =
     | Remove ItemIndex
     deriving Show
 
-data ToDoList = ToDoList [Item] deriving (Generic, Show)
+newtype ToDoList = ToDoList [Item] deriving (Generic,Show)
 instance ToJSON ToDoList
 instance FromJSON ToDoList
 
@@ -172,7 +172,7 @@ optionsParser = RunOptions
 
 main :: IO ()
 main = do
-    RunOptions dataPath command <- execParser (info (optionsParser) (progDesc "To-do list application"))
+    RunOptions dataPath command <- execParser (info optionsParser (progDesc "To-do list application"))
 
     homeDir <- getHomeDirectory
 
@@ -192,14 +192,11 @@ readToDoList :: FilePath -> IO ToDoList
 readToDoList path = do
     mbToDoList <- catchJust
         (\e -> if isDoesNotExistError e then Just () else Nothing)
-        (BS.readFile path >>= return . superDecode)
+        (rightToMaybe . Yaml.decodeEither' <$> BS.readFile path)
         (\_ -> return $ Just (ToDoList []))
     case mbToDoList of
         Nothing -> error "YAML file is corrupt"
         Just toDoList -> return toDoList
-
-superDecode :: BS.ByteString -> Maybe ToDoList
-superDecode s = (rightToMaybe . Yaml.decodeEither') s
 
 run :: FilePath -> Command -> IO ()
 run dataPath Info = putStrLn "info"
