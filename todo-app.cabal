@@ -24,6 +24,7 @@ executable todo-app
                      , bytestring
                      , directory
                      , either
+                     , listsafe
                      , optparse-applicative
                      , strict
                      , text
