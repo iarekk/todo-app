@@ -28,7 +28,7 @@ run dataPath Init = putStrLn "init"
 run dataPath List = listItems dataPath
 run dataPath (Add item) = addItem dataPath item
 run dataPath (View itemIndex) = viewItem dataPath itemIndex
-run dataPath (Update itemIndex itemUpdate) = putStrLn $ "update item #" ++ show itemIndex ++ " with update " ++ show itemUpdate
+run dataPath (Update itemIndex itemUpdate) = updateItem dataPath itemIndex itemUpdate
 run dataPath (Remove itemIndex) = removeItem dataPath itemIndex
 
 addItem :: FilePath -> Item -> IO()
@@ -61,6 +61,46 @@ showField :: String -> (a -> String) -> Maybe a -> String
 showField fieldName f (Just x) = " * " ++ fieldName ++ ": " ++ f x
 showField fieldName _ Nothing = " * " ++ fieldName ++ ": " ++ "(not set)"
 
+
+
+updateItem :: FilePath -> ItemIndex -> ItemUpdate -> IO()
+updateItem path itemIndex update =
+    if isUpdateEmpty update
+    then putStrLn "No fields set for update"
+    else updateItem' path itemIndex update
+
+updateItem' :: FilePath -> ItemIndex -> ItemUpdate -> IO()
+updateItem' path itemIndex (ItemUpdate mbTitle mbDescription mbPriority mbDueBy) = do
+    ToDoList items <- readToDoList path
+    let update (Item title description priority dueBy) =
+            Item
+                (updateField mbTitle title)
+                (updateField mbDescription description)
+                (updateField mbPriority priority)
+                (updateField mbDueBy dueBy)
+
+        mbItems = updateAt items itemIndex update
+    case mbItems of
+        Nothing -> putStrLn "Invalid item index"
+        Just items' -> writeToDoList path (ToDoList items')
+
+isUpdateEmpty :: ItemUpdate -> Bool
+isUpdateEmpty (ItemUpdate Nothing Nothing Nothing Nothing) = True
+isUpdateEmpty _ = False
+
+updateField :: Maybe a -> a -> a
+updateField (Just newValue) _ = newValue
+updateField Nothing oldValue = oldValue
+
+updateAt :: [a] -> Int -> (a -> a) -> Maybe [a]
+updateAt xs idx f =
+    if idx < 0 || idx >= length xs
+    then Nothing
+    else
+        let (before, x : after) = splitAt idx xs
+            xs' = before ++ f x : after
+        in Just xs'
+
 removeItem :: FilePath -> ItemIndex -> IO()
 removeItem path itemIndex = do
     ToDoList items <- readToDoList path
@@ -76,6 +116,6 @@ removeAt xs idx =
     if idx < 0 || idx >= length xs
     then Nothing
     else
-        let (before, _:after) = splitAt idx xs
+        let (before, _ : after) = splitAt idx xs
             xs' = before ++ after
         in Just xs'
