@@ -2,6 +2,7 @@
 
 module Main(main) where
 
+import Control.Monad(forM_)
 import Data.String.Utils(replace)
 import Data.List.Safe((!!))
 import Data.Time
@@ -24,7 +25,7 @@ main = do
 run :: FilePath -> Command -> IO ()
 run dataPath Info = putStrLn "info"
 run dataPath Init = putStrLn "init"
-run dataPath List = putStrLn "list"
+run dataPath List = listItems dataPath
 run dataPath (Add item) = addItem dataPath item
 run dataPath (View itemIndex) = viewItem dataPath itemIndex
 run dataPath (Update itemIndex itemUpdate) = putStrLn $ "update item #" ++ show itemIndex ++ " with update " ++ show itemUpdate
@@ -35,6 +36,11 @@ addItem path item = do
     ToDoList items <- readToDoList path
     let newToDoList = ToDoList (item : items)
     writeToDoList path newToDoList
+
+listItems :: FilePath -> IO()
+listItems path = do
+    ToDoList items <- readToDoList path
+    forM_ (zip [0..] items) (uncurry showItem) -- uncurry :: (a -> b -> c) -> (a,b) -> c
 
 viewItem :: FilePath -> ItemIndex -> IO ()
 viewItem dataPath itemIndex = do
