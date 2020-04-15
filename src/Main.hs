@@ -2,21 +2,15 @@
 
 module Main(main) where
 
-import           Control.Exception
-import qualified Data.ByteString.Char8 as BS
-import qualified Data.ByteString.Lazy.Char8 as BSL
-import           Data.Either.Combinators (rightToMaybe)
-import           Data.String.Utils(replace)
-import           Data.List.Safe((!!))
-import           Data.Time
-import qualified Data.Yaml as Yaml
-import           Prelude hiding ((!!))
-import           System.Directory(getHomeDirectory)
-import           System.IO.Error
+import Data.String.Utils(replace)
+import Data.List.Safe((!!))
+import Data.Time
+import Prelude hiding ((!!))
+import System.Directory(getHomeDirectory)
 
-import           Parsers(runParser)
-import           Types
-
+import Parsers(runParser)
+import Storage(readToDoList, writeToDoList)
+import Types
 
 main :: IO ()
 main = do
@@ -26,16 +20,6 @@ main = do
 
     let expandedDataPath = replace "~" homeDir dataPath
     run expandedDataPath command
-
-readToDoList :: FilePath -> IO ToDoList
-readToDoList path = do
-    mbToDoList <- catchJust
-        (\e -> if isDoesNotExistError e then Just () else Nothing)
-        (rightToMaybe . Yaml.decodeEither' <$> BS.readFile path)
-        (\_ -> return $ Just (ToDoList []))
-    case mbToDoList of
-        Nothing -> error "YAML file is corrupt"
-        Just toDoList -> return toDoList
 
 run :: FilePath -> Command -> IO ()
 run dataPath Info = putStrLn "info"
@@ -51,11 +35,6 @@ addItem path item = do
     ToDoList items <- readToDoList path
     let newToDoList = ToDoList (item : items)
     writeToDoList path newToDoList
-
-
-
-writeToDoList :: FilePath -> ToDoList -> IO()
-writeToDoList path todos = BS.writeFile path (Yaml.encode todos)
 
 viewItem :: FilePath -> ItemIndex -> IO ()
 viewItem dataPath itemIndex = do
@@ -75,3 +54,4 @@ showItem itemIndex (Item title mbDescription mbPriority mbDueBy) = do
 showField :: String -> (a -> String) -> Maybe a -> String
 showField fieldName f (Just x) = " * " ++ fieldName ++ ": " ++ f x
 showField fieldName _ Nothing = " * " ++ fieldName ++ ": " ++ "(not set)"
+
