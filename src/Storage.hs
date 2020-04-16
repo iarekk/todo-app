@@ -7,17 +7,23 @@ import           System.IO.Error
 
 import Types
 
-readToDoList' :: FilePath -> IO (Either Yaml.ParseException ToDoList)
-readToDoList' path =
-    Yaml.decodeEither' <$> BS.readFile path
-
-readToDoList :: FilePath -> IO ToDoList
-readToDoList path = do
-    mbToDoList <- catchJust
+readToDoList' :: FilePath -> IO (Either String ToDoList)
+readToDoList' path = do
+    eitherToDoList <- catchJust
         (\e -> if isDoesNotExistError e then Just () else Nothing)
         (Yaml.decodeEither' <$> BS.readFile path)
         (\_ -> return $ Right (ToDoList []))
-    case mbToDoList of
+    case eitherToDoList of
+        Left err -> return $ Left $ show err
+        Right toDoList -> return $ Right toDoList
+
+readToDoList :: FilePath -> IO ToDoList
+readToDoList path = do
+    eitherToDoList <- catchJust
+        (\e -> if isDoesNotExistError e then Just () else Nothing)
+        (Yaml.decodeEither' <$> BS.readFile path)
+        (\_ -> return $ Right (ToDoList []))
+    case eitherToDoList of
         Left _ -> error "YAML file is corrupt"
         Right toDoList -> return toDoList
 
