@@ -7,10 +7,10 @@ import Data.String.Utils(replace)
 import Data.List.Safe((!!))
 import Data.Time
 import Prelude hiding ((!!))
-import System.Directory(getHomeDirectory)
+import System.Directory(doesFileExist, getHomeDirectory)
 
 import Parsers(runParser)
-import Storage(readToDoList, writeToDoList)
+import Storage(readToDoList, readToDoList', writeToDoList)
 import Types
 
 main :: IO ()
@@ -23,13 +23,28 @@ main = do
     run expandedDataPath command
 
 run :: FilePath -> Command -> IO ()
-run dataPath Info = putStrLn "info"
-run dataPath Init = putStrLn "init"
+run dataPath Info = showInfo dataPath
+run dataPath Init = initItems dataPath
 run dataPath List = listItems dataPath
 run dataPath (Add item) = addItem dataPath item
 run dataPath (View itemIndex) = viewItem dataPath itemIndex
 run dataPath (Update itemIndex itemUpdate) = updateItem dataPath itemIndex itemUpdate
 run dataPath (Remove itemIndex) = removeItem dataPath itemIndex
+
+showInfo :: FilePath -> IO()
+showInfo dataPath = do
+    putStrLn $ "Data file path: " ++ dataPath
+    exists <- doesFileExist dataPath
+    if exists
+    then do
+        mbList <- readToDoList' dataPath
+        case mbList of
+            Left err -> putStrLn $ "The file is corrupted: " ++ show err
+            Right (ToDoList items) -> putStrLn $ "Contains: " ++ show (length items) ++ " items"
+    else putStrLn "File does not exist"
+
+initItems :: FilePath -> IO()
+initItems path = writeToDoList path (ToDoList [])
 
 addItem :: FilePath -> Item -> IO()
 addItem path item = do
